@@ -4,6 +4,8 @@ Created on Sun May  3 14:26:05 2020
 @author: gene
 """
 
+#git clone https://github.com/frytalent/healint_test.git
+
 Use python3 to excute healint_test.py.
 python3 healint_test.py
 
