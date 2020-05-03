@@ -28,10 +28,10 @@ sudo cp pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
 sudo systemctl restart postgresql
 psql -U postgres  -f roles.sql 
 sudo -u postgres createdb test
-psql -U postgres s -f test_db_schema.sql 
+psql -U postgres -d test -f test_db_schema.sql 
 
 
-psql -U gene -d test -c "copy user_ip(userid,ip_address) from '`pwd`/user_ip_table.csv' delimiter ',' CSV HEADER;"
-psql -U gene -d test -c "copy ip_country from '`pwd`/IpToCountryNum.csv' delimiter ',' CSV;"
+psql -U postgres -d test -c "copy user_ip(userid,ip_address) from '`pwd`/user_ip_table.csv' delimiter ',' CSV HEADER;"
+psql -U postgres -d test -c "copy ip_country from '`pwd`/IpToCountryNum.csv' delimiter ',' CSV;"
 
 
