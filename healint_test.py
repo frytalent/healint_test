@@ -19,8 +19,8 @@ def ip_to_num(x):
     return ip_num
 
 
-database_ip = "45.32.103.71"
-#database_ip = "localhost"
+#database_ip = "45.32.103.71"
+database_ip = "localhost"
 
 conn = psycopg2.connect(host=database_ip, database="test",
                         user="gene", password="d430f885-b284+9d9e39")
