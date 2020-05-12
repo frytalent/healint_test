@@ -3,13 +3,12 @@ FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY requirements.txt /
+COPY healint_test.py / 
+COPY roles.sql /
+COPY user_ip_table.csv /
+COPY test_db_schema.sql /
 
 WORKDIR /
-
-#COPY healint_test.py /app 
-#COPY roles.sql /app
-#COPY user_ip_table.csv /app
-#COPY test_db_schema.sql /app
 
 #WORKDIR /app
 
@@ -41,21 +40,35 @@ RUN grep -v '^#' IpToCountry.1588394470.csv > IpToCountry.csv
 
 RUN cat IpToCountry.csv |sed 's/"//g' |awk -F, '{ print $1","$2","$3","$4","$5","$6","$7 }' > IpToCountryNum.csv
 
-RUN cat /etc/postgresql/12/main/pg_hba.conf |sed 's/local   all             postgres                                peer/local   all             postgres                                trust/g' |tee pg_hba.conf 
-RUN cp pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
-RUN systemctl restart postgresql
-RUN psql -U postgres  -f roles.sql 
-RUN sudo -u postgres createdb test
-RUN psql -U postgres -d test -f test_db_schema.sql 
+RUN PG_HBA=`find /etc/postgresql |grep pg_hba.conf`
+RUN echo "host all  all    0.0.0.0/0  md5" | tee -a $PG_HBA
 
+RUN POSTGRESQL_CONF=`find /etc/postgresql |grep postgresql.conf`
+RUN echo "listen_addresses='*'" | tee -a $POSTGRESQL_CONF
 
-RUN psql -U postgres -d test -c "copy user_ip(userid,ip_address) from '`pwd`/user_ip_table.csv' delimiter ',' CSV HEADER;"
-RUN psql -U postgres -d test -c "copy ip_country from '`pwd`/IpToCountryNum.csv' delimiter ',' CSV;"
+#RUN cat /etc/postgresql/12/main/pg_hba.conf |sed 's/local   all             postgres                                peer/local   all             postgres                                trust/g' |tee pg_hba.conf 
+#RUN cp pg_hba.conf /etc/postgresql/12/main/pg_hba.conf
+
+#RUN systemctl restart postgresql
+#RUN `ls /usr/lib/postgresql/*/bin/postgres` -D /usr/local/pgsql/data
+CMD ["`ls /usr/lib/postgresql/*/bin/postgres`", "-D", "/usr/local/pgsql/data", "-c", "config_file=$POSTGRESQL_CONF"]
+#RUN psql -U postgres  -f /roles.sql
+CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "postgres", "-f", "/roles.sql"] 
+#RUN su postgres createdb test
+CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-d", "postgres", "-c", "'CREATE DATABASE test OWNER gene;'"
+#CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-3", "create database test;"] 
+CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "gene", "-d", "test", "-f", "/test_db_schema.sql"] 
+#RUN psql -U postgres -d test -f /test_db_schema.sql 
+
+CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "gene", "-d", "test", "-c", "copy user_ip(userid,ip_address) from '/user_ip_table.csv' delimiter ',' CSV HEADER;"] 
+#RUN psql -U postgres -d test -c "copy user_ip(userid,ip_address) from '/user_ip_table.csv' delimiter ',' CSV HEADER;"
+CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "gene", "-d", "test", "-c",  "copy ip_country from '/IpToCountryNum.csv' delimiter ',' CSV;"] 
+#RUN psql -U postgres -d test -c "copy ip_country from '/IpToCountryNum.csv' delimiter ',' CSV;"
 
 EXPOSE 5432
 
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 
-CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
+#CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
 
-CMD ["/usr/bin/python3", "/app/healint_test.py"]
+CMD ["/usr/bin/python3", "/healint_test.py"]
