@@ -12,6 +12,8 @@ WORKDIR /
 
 #WORKDIR /app
 
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql", "/var/run/postgresql/", '/data']
+
 RUN apt-get update 
 
 RUN apt-get install -y wget gnupg2
@@ -51,7 +53,14 @@ RUN echo "listen_addresses='*'" | tee -a $POSTGRESQL_CONF
 
 #RUN systemctl restart postgresql
 #RUN `ls /usr/lib/postgresql/*/bin/postgres` -D /usr/local/pgsql/data
-CMD ["`ls /usr/lib/postgresql/*/bin/postgres`", "-D", "/usr/local/pgsql/data", "-c", "config_file=$POSTGRESQL_CONF"]
+RUN mkdir -p /data
+RUN chown postgres.postgres /data -R
+RUN su  postgres -c '/usr/lib/postgresql/10/bin/postgres -D /data  -c config_file=/etc/postgresql/10/main/postgresql.conf' &
+#RUN mkdir -p /var/run/postgresql/10-main.pg_stat_tmp
+RUN mkdir -p /var/run/postgresql/
+#RUN chown postgres.postgres /var/run/postgresql/10-main.pg_stat_tmp -R
+RUN chown postgres.postgres /var/run/postgresql/ -R
+#CMD ["`ls /usr/lib/postgresql/*/bin/postgres`", "-D", "/data", "-c", "config_file=$POSTGRESQL_CONF"]
 #RUN psql -U postgres  -f /roles.sql
 CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "postgres", "-f", "/roles.sql"] 
 #RUN su postgres createdb test
@@ -65,10 +74,10 @@ CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "gene", "-d", "test", "-c", "c
 CMD ["`ls /usr/lib/postgresql/*/bin/psql`", "-U", "gene", "-d", "test", "-c",  "copy ip_country from '/IpToCountryNum.csv' delimiter ',' CSV;"] 
 #RUN psql -U postgres -d test -c "copy ip_country from '/IpToCountryNum.csv' delimiter ',' CSV;"
 
+CMD ["/usr/bin/python3", "/healint_test.py"]
+
 EXPOSE 5432
 
-VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
 
 #CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
 
-CMD ["/usr/bin/python3", "/healint_test.py"]

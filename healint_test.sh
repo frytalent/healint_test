@@ -8,11 +8,11 @@
 ######################################
 
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-apt update
-apt install -y postgresql-12
+sudo apt update
+sudo apt install -y postgresql-12
 sudo -u postgres createdb test
 
-apt install -y python3-pip
+sudo apt install -y python3-pip
 pip3 install pandas
 pip3 install sqlalchemy
 pip3 install psycopg2-binary
